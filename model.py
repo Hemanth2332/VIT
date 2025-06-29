@@ -42,26 +42,26 @@ class Attention(nn.Module):
         if dim != self.dim:
             raise ValueError
 
-        qkv = self.qkv(x)  
+        qkv = self.qkv(x)
         qkv = qkv.reshape(
                 n_samples, n_tokens, 3, self.n_heads, self.head_dim
         )
         
-        qkv = qkv.permute(2, 0, 3, 1, 4)  
+        qkv = qkv.permute(2, 0, 3, 1, 4)
 
         q, k, v = qkv[0], qkv[1], qkv[2]
-        k_t = k.transpose(-2, -1)  
+        k_t = k.transpose(-2, -1)
         
-        dp = (q @ k_t) * self.scale 
-        attn = dp.softmax(dim=-1)  
+        dp = (q @ k_t) * self.scale
+        attn = dp.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
-        weighted_avg = attn @ v  
-        weighted_avg = weighted_avg.transpose(1, 2)  
-        weighted_avg = weighted_avg.flatten(2)  
+        weighted_avg = attn @ v
+        weighted_avg = weighted_avg.transpose(1, 2)
+        weighted_avg = weighted_avg.flatten(2)
 
-        x = self.proj(weighted_avg)  
-        x = self.proj_drop(x)  
+        x = self.proj(weighted_avg)
+        x = self.proj_drop(x)
 
         return x
     

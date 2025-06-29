@@ -8,28 +8,19 @@ from tqdm import tqdm
 from model import VIT
 
 
-custom_config = {
-    "img_size": 256,
-    "patch_size": 16,
-    "in_chans": 3,
-    "n_classes": 257,
-    "embed_dim": 384,
-    "depth": 8,
-    "n_heads": 6,
-    "qkv_bias": True,
-    "mlp_ratio": 4.0,
-}
-
 DEVICE= "cuda" if torch.cuda.is_available() else "cpu"
 LOAD = True
 EPOCHS = 50
+MODEL_PATH = "model_13.pth"
+
 
 transform = T.Compose([
-    T.Resize((256, 256)),
+    T.RandomResizedCrop(224, scale=(0.5, 1.0), ratio=(0.75, 1.33)),
+    T.RandomHorizontalFlip(p=0.5),
+    T.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+    T.RandomRotation(15),
     T.ToTensor(),
-    T.ColorJitter(),
-    T.RandomHorizontalFlip(),
-    T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    T.Normalize(mean=[0.5]*3, std=[0.5]*3)
 ])
 
 
@@ -42,6 +33,19 @@ train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
 train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+classes = dataset.classes
+
+custom_config = {
+    "img_size": 224,
+    "patch_size": 16,
+    "in_chans": 3,
+    "n_classes": len(classes),
+    "embed_dim": 384,
+    "depth": 8,
+    "n_heads": 6,
+    "qkv_bias": True,
+    "mlp_ratio": 4.0,
+}
 
 
 model = VIT(**custom_config).to(DEVICE)
@@ -51,7 +55,7 @@ criterion = torch.nn.CrossEntropyLoss()
 classes = dataset.classes
 
 if LOAD:
-    checkpoint = torch.load("model_13.pth")
+    checkpoint = torch.load()
     model.load_state_dict(checkpoint['model_weights'])
     optimizer.load_state_dict(checkpoint['optimizer'])
 
@@ -118,4 +122,4 @@ for epoch in range(current_epoch, EPOCHS):
         "epoch": epoch
     }
 
-    torch.save(checkpoint, f"./models/model_{epoch+1}.pth")
+    torch.save(checkpoint, f"./models/model_food101_{epoch+1}.pth")
